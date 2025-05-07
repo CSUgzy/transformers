@@ -240,6 +240,19 @@ def main():
     # We now keep distinct sets of args, for a cleaner separation of concerns.
 
     parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
+    '''
+    分支1通过json读取参数，例如 python train.py config.json  
+    json文件如下格式{
+        "model_name_or_path": "bert-base-uncased",
+        "dataset_name": "glue",
+        "per_device_train_batch_size": 16
+        }
+    分支2通过命令行参数运行，例如 
+        python train.py \
+        --model_name_or_path bert-base-uncased \
+        --dataset_name glue \
+        --per_device_train_batch_size 16
+    '''
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script and it's the path to a json file,
         # let's parse it to get our arguments.
