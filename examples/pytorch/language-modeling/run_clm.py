@@ -262,6 +262,7 @@ def main():
 
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
+    '这是 Hugging Face 生态（如 Transformers 库）中常见的一个遥测函数，目的是匿名统计用户使用示例脚本的情况，不会收集敏感数据（如本地文件路径、私有模型权重等）。'
     send_example_telemetry("run_clm", model_args, data_args)
 
     # Setup logging
@@ -318,15 +319,16 @@ def main():
     # download the dataset.
     if data_args.dataset_name is not None:
         # Downloading and loading a dataset from the hub.
-        raw_datasets = load_dataset(
-            data_args.dataset_name,
-            data_args.dataset_config_name,
-            cache_dir=model_args.cache_dir,
-            token=model_args.token,
-            streaming=data_args.streaming,
-            trust_remote_code=model_args.trust_remote_code,
+        # 远程下载数据集
+        raw_datasets = load_dataset(                             # 这是核心的加载数据集的函数调用。load_dataset 是 datasets 库中的一个函数，用于从Hugging Face Hub或本地文件系统加载数据集。
+            data_args.dataset_name,                              # 指定要加载的数据集的名称。例如，"wikitext"
+            data_args.dataset_config_name,                       # 指定数据集的配置名称。有些数据集有多个配置，例如不同的语言版本。如果只有一个配置，可以设置为None
+            cache_dir=model_args.cache_dir,                      # 指定数据集的缓存目录。下载的数据集会保存在这个目录下，下次加载时可以直接从缓存加载，而不需要重新下载
+            token=model_args.token,                              # 如果数据集是私有的，需要提供Hugging Face Hub的token才能访问。
+            streaming=data_args.streaming,                       # 指定是否使用流式加载。流式加载可以避免一次性将整个数据集加载到内存中，适用于大型数据集。
+            trust_remote_code=model_args.trust_remote_code,      # 指定是否信任远程代码。某些数据集可能包含需要执行的远程代码，例如自定义的数据处理函数
         )
-        if "validation" not in raw_datasets.keys():
+        if "validation" not in raw_datasets.keys():                    # 加载数据集后，此代码检查数据集中是否包含名为 "validation" 的键。这用于确定数据集中是否已经存在验证集。
             raw_datasets["validation"] = load_dataset(
                 data_args.dataset_name,
                 data_args.dataset_config_name,
@@ -345,7 +347,7 @@ def main():
                 streaming=data_args.streaming,
                 trust_remote_code=model_args.trust_remote_code,
             )
-    else:
+    else:                                    # 如果 data_args.dataset_name 为 None，则执行此代码块。这意味着程序将尝试从本地文件系统加载数据集。
         data_files = {}
         dataset_args = {}
         if data_args.train_file is not None:
@@ -401,6 +403,7 @@ def main():
         "token": model_args.token,
         "trust_remote_code": model_args.trust_remote_code,
     }
+    # 根据模型名称或者路径加载模型配置文件，若没有则打印log
     if model_args.config_name:
         config = AutoConfig.from_pretrained(model_args.config_name, **config_kwargs)
     elif model_args.model_name_or_path:
@@ -430,6 +433,7 @@ def main():
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
 
+    # 根据模型路径或名称加载模型
     if model_args.model_name_or_path:
         torch_dtype = (
             model_args.torch_dtype
@@ -469,6 +473,7 @@ def main():
     # since this will be pickled to avoid _LazyModule error in Hasher force logger loading before tokenize_function
     tok_logger = transformers.utils.logging.get_logger("transformers.tokenization_utils_base")
 
+    # 处理数据的函数
     def tokenize_function(examples):
         with CaptureLogger(tok_logger) as cl:
             output = tokenizer(examples[text_column_name])
